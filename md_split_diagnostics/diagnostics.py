@@ -109,3 +109,54 @@ def validate_split(
     The report names the limiting feature and gives the reason it failed.
     """
     raise NotImplementedError
+
+
+def adjacent_fraction(
+    n_frames: int,
+    train_idx: np.ndarray,
+    test_idx: np.ndarray,
+    traj_ids: np.ndarray | None = None,
+    window: int = 1,
+) -> float:
+    """Fraction of test frames that have a train frame within ``window`` frames.
+
+    Neighbours are only counted inside the same trajectory, so frames on
+    either side of a trajectory boundary are not adjacent. A random
+    frame-level split gives a value near 1 (leaky); a blocked split with
+    ``gap >= window`` gives 0.
+
+    Parameters
+    ----------
+    n_frames : int
+        Total number of frames (rows of x).
+    train_idx, test_idx : int arrays
+        Frame indices of the train and test sets.
+    traj_ids : (n_frames,) int array or None
+        Trajectory label per frame; None means a single trajectory.
+    window : int
+        How many frames before and after each test frame to check.
+
+    Returns
+    -------
+    float in [0, 1]; 0.0 if there are no test frames.
+    """
+    if traj_ids is None:
+        traj_ids = np.zeros(n_frames, dtype=int)
+    
+    if test_idx.size == 0:
+        return 0.0
+    
+    is_train = np.zeros(n_frames, dtype=bool)
+    is_train[train_idx] = True
+
+    has_train_neighbor = np.zeros(len(test_idx), dtype=bool)
+    for s in range(1, window + 1):
+        for shift in (s, -s):
+            nb = test_idx + shift
+            valid = (nb >= 0) & (nb < n_frames)
+            is_train_neighbor = is_train[nb[valid]]
+            same = traj_ids[nb[valid]] == traj_ids[test_idx[valid]]
+            hit = is_train_neighbor & same
+            has_train_neighbor[valid] |= hit
+    
+    return float(np.mean(has_train_neighbor))

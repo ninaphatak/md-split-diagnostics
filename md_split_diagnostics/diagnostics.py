@@ -72,7 +72,33 @@ def drift_test(
     statistic : (n_features,) float array
     pvalue : (n_features,) float array
     """
-    raise NotImplementedError
+
+    if x.ndim == 1:
+        x = x.reshape(-1, 1)
+    
+    if traj_ids is None:
+        traj_ids = np.zeros(len(x), dtype=int)
+    
+    first_idx = []
+    second_idx = []
+
+    for trajectory in np.unique(traj_ids):
+        rows = np.flatnonzero(traj_ids == trajectory)
+        half = len(rows) // 2
+        first_idx.append(rows[:half])
+        second_idx.append(rows[half:])
+    
+    statistic = np.empty(x.shape[1], dtype=float)
+    pvalue = np.empty(x.shape[1], dtype=float)
+    first_idx = np.concatenate(first_idx)
+    second_idx = np.concatenate(second_idx)
+
+    for j in range(x.shape[1]):
+        statistic[j], pvalue[j] = ks_2samp(x[first_idx][:, j], x[second_idx][:, j])
+    
+
+
+    return statistic, pvalue
 
 
 # --- Milestones 3-4: signatures provisional, finalised when we get there ---

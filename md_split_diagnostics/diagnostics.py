@@ -11,6 +11,7 @@ Shape conventions used throughout:
 from __future__ import annotations
 
 import numpy as np
+from scipy.stats import ks_2samp
 
 
 def integrated_autocorrelation_time(
@@ -94,7 +95,25 @@ def split_test(
         "adjacent_fraction" : float, fraction of test frames with at least
             one train frame within ``window`` frames in the same trajectory.
     """
-    raise NotImplementedError
+    if x.ndim == 1:
+        x = x.reshape(-1, 1)
+
+    n_features = x.shape[1]
+    n_frames = len(x)
+    statistic = np.empty(n_features)
+    pvalue = np.empty(n_features)
+
+    for j in range (n_features):
+        statistic[j], pvalue[j] = ks_2samp(x[train_idx][:, j], x[test_idx][:, j])
+
+    adjacent = adjacent_fraction(n_frames, train_idx, test_idx, traj_ids, window)
+
+    dict_out = {
+        "ks_statistic": statistic,
+        "ks_pvalue": pvalue,
+        "adjacent_fraction": adjacent, 
+    }
+    return dict_out
 
 
 def validate_split(

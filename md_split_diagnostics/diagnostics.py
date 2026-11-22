@@ -21,6 +21,8 @@ def integrated_autocorrelation_time(
 ) -> np.ndarray:
     """Integrated autocorrelation time per feature, in frames.
 
+    Not implemented yet (planned). Calling it raises NotImplementedError.
+
     Uses the convention tau_int = 1/2 + sum_{k>=1} rho(k), so an
     uncorrelated series has tau_int = 0.5 and the variance of the mean is
     var(x) * 2 * tau_int / n.
@@ -42,7 +44,9 @@ def integrated_autocorrelation_time(
     -------
     tau : (n_features,) float array
     """
-    raise NotImplementedError
+    raise NotImplementedError(
+        "integrated_autocorrelation_time is not implemented yet; it is planned for a future release."
+    )
 
 
 def effective_sample_size(
@@ -51,11 +55,15 @@ def effective_sample_size(
 ) -> np.ndarray:
     """Effective number of independent samples per feature: n / (2 * tau_int).
 
+    Not implemented yet (planned). Calling it raises NotImplementedError.
+
     Returns
     -------
     ess : (n_features,) float array
     """
-    raise NotImplementedError
+    raise NotImplementedError(
+        "effective_sample_size is not implemented yet; it is planned for a future release."
+    )
 
 
 def drift_test(
@@ -101,7 +109,7 @@ def drift_test(
     return statistic, pvalue
 
 
-# --- Milestones 3-4: signatures provisional, finalised when we get there ---
+# --- Split checks. validate_split is not implemented yet. ---
 
 
 def split_test(
@@ -151,9 +159,13 @@ def validate_split(
 ):
     """Combine the diagnostics into a pass/fail ``SplitReport``.
 
+    Not implemented yet (planned). Calling it raises NotImplementedError.
+
     The report names the limiting feature and gives the reason it failed.
     """
-    raise NotImplementedError
+    raise NotImplementedError(
+        "validate_split is not implemented yet; it is planned for a future release."
+    )
 
 
 def adjacent_fraction(

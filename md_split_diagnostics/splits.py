@@ -4,6 +4,13 @@ from __future__ import annotations
 
 import numpy as np
 
+__all__ = ["blocked_split", "random_split"]
+
+
+def _check_test_frac(test_frac: float) -> None:
+    if not 0 < test_frac < 1:
+        raise ValueError(f"test_frac must be between 0 and 1, got {test_frac}")
+
 
 def random_split(
     n_frames: int,
@@ -15,9 +22,9 @@ def random_split(
     This is the leaky baseline: on correlated data nearly every test frame
     has a train frame as an immediate neighbour.
     """
-    frames = np.arange(n_frames)
+    _check_test_frac(test_frac)
     rng = np.random.default_rng(seed)
-    frames = rng.permutation(frames)
+    frames = rng.permutation(n_frames)
     n_test = int(round(n_frames * test_frac))
     test_idx = np.sort(frames[:n_test])
     train_idx = np.sort(frames[n_test:])
@@ -28,18 +35,23 @@ def random_split(
 def blocked_split(
     n_frames: int,
     test_frac: float = 0.2,
-    gap: int = 0,
+    gap: float = 0,
     traj_ids: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Use contiguous time blocks for train and test, with ``gap`` frames dropped between them.
 
-    Gap frames belong to neither set. Set ``gap`` to a few tau_int. With
-    several trajectories, each trajectory is split the same way, so the test
-    set takes about ``test_frac`` of every trajectory.
+    The test block is the end of the trajectory. Gap frames belong to
+    neither set; a fractional ``gap`` is rounded up. Set ``gap`` to a few
+    tau_int. With several trajectories, each trajectory is split the same
+    way, so the test set takes about ``test_frac`` of every trajectory.
     """
+    _check_test_frac(test_frac)
+    if gap < 0:
+        raise ValueError(f"gap must be >= 0, got {gap}")
 
     if traj_ids is None:
         traj_ids = np.zeros(n_frames, dtype=int)
+    traj_ids = np.asarray(traj_ids)
 
     if len(traj_ids) != n_frames:
         raise ValueError(
@@ -48,38 +60,25 @@ def blocked_split(
 
     train_indices = []
     test_indices = []
-    
+
     for trajectory in np.unique(traj_ids):
         rows = np.flatnonzero(traj_ids == trajectory)
         train_idx, test_idx = _blocked_one(len(rows), test_frac, gap)
-        train_idx += rows[0]
-        test_idx += rows[0]
-        train_indices.append(train_idx)
-        test_indices.append(test_idx)
-    
-    train_indices = np.concatenate(train_indices)
-    test_indices = np.concatenate(test_indices)
+        train_indices.append(train_idx + rows[0])
+        test_indices.append(test_idx + rows[0])
 
-    return train_indices, test_indices
+    return np.concatenate(train_indices), np.concatenate(test_indices)
 
 
 def _blocked_one(
     n_frames: int,
-    test_frac: float = 0.2,
-    gap: int = 0,
+    test_frac: float,
+    gap: float,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Use contiguous time blocks for train and test, with ``gap`` frames dropped between them.
-
-    Gap frames belong to neither set. Set ``gap`` to a few tau_int.
-    """
+    """Blocked split of one trajectory, as frame offsets from its first frame."""
     n_test = int(round(n_frames * test_frac))
-    train_idx = (np.arange(0, n_frames - n_test - int(np.ceil(gap))))
+    train_idx = np.arange(0, n_frames - n_test - int(np.ceil(gap)))
     test_idx = np.arange(n_frames - n_test, n_frames)
-
-    if gap < 0:
-        raise ValueError(
-            f"gap must be >= 0, got {gap}"
-        )
 
     if train_idx.size == 0 or test_idx.size == 0:
         raise ValueError(

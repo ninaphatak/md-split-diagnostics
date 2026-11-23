@@ -19,6 +19,8 @@ ALANINE_DT_PS = 1.0  # frame spacing of the mdshare alanine dipeptide data
 
 @dataclass
 class Dataset:
+    """A feature matrix with feature names and a trajectory id per frame."""
+
     X: np.ndarray
     feature_names: list[str]
     traj_ids: np.ndarray
@@ -104,8 +106,17 @@ def load_alanine_dipeptide(data_dir: str | Path = "data") -> Dataset:
 
     Returns sin/cos features of phi and psi for all three trajectories,
     concatenated, with ``traj_ids`` 0, 1, 2.
+
+    Needs the optional ``mdshare`` dependency:
+    ``pip install "md-split-diagnostics[examples]"``.
     """
-    import mdshare
+    try:
+        import mdshare
+    except ImportError as err:
+        raise ImportError(
+            "load_alanine_dipeptide needs mdshare; install it with "
+            '`pip install "md-split-diagnostics[examples]"`'
+        ) from err
 
     data_dir = Path(data_dir)
     data_dir.mkdir(parents=True, exist_ok=True)

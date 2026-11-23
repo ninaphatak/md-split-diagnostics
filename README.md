@@ -104,6 +104,15 @@ A split passes when both checks pass.
    `n / (2 * tau_int)` instead of frame counts. The split fails if any feature
    has `p < alpha / n_features` (`alpha` defaults to 0.05).
 
+## Reading the results
+
+- **Leakage failure:** the test score would be inflated by near-duplicate
+  frames. Use a blocked split or a larger gap.
+- **Shift failure with no leakage:** the split is honest, and the test block
+  sits in a different region than train. Expect a lower score.
+- **Drift flagged by `drift_test`:** the trajectories are not equilibrated on
+  those features, and no split fixes that alone.
+
 ## Conventions and limits
 
 - `tau_int = 1/2 + sum of rho(k) for k >= 1`, so uncorrelated data gives 0.5
@@ -118,6 +127,14 @@ A split passes when both checks pass.
   Use them to rank features; use `validate_split` for a verdict.
 - Periodic features such as angles should be converted with
   `dihedrals_to_features` first.
+- `blocked_split` always puts the test block at the end of each trajectory;
+  there is no blocked k-fold.
+- There is no command-line entry point; use the Python API.
+
+## Claude skill
+
+A Claude skill for this package is in
+[`skills/md-split-diagnostics/SKILL.md`](skills/md-split-diagnostics/SKILL.md).
 
 ## Development
 

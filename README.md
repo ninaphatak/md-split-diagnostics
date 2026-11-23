@@ -70,6 +70,9 @@ Split PASSED: no leakage or distribution shift found
 split fails outright, and a blocked split only passes once the gap covers the
 slowest feature.
 
+To run it, from a clone of this repository (the first run downloads about 6 MB
+into `./data`):
+
 ```bash
 pip install -e ".[examples]"
 python scripts/alanine_dipeptide_demo.py
@@ -89,6 +92,8 @@ python scripts/alanine_dipeptide_demo.py
 | `validate_split(x, train_idx, test_idx, traj_ids, feature_names)` | Pass/fail `SplitReport` naming the limiting feature and the reason. |
 | `load_features(path)` | Load a `.npy` or `.csv` feature matrix as a `Dataset`. |
 | `dihedrals_to_features(angles, names)` | Turn angles into sin/cos pairs so the wraparound at pi disappears. |
+| `load_alanine_dipeptide(data_dir)` | Download and load the demo data set (needs the `examples` extra). |
+| `Dataset(X, feature_names, traj_ids)` | Container for a feature matrix, its feature names and a trajectory id per frame. |
 
 ## How `validate_split` decides
 
